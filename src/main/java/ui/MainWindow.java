@@ -1,3 +1,5 @@
+package ui;
+
 import game.Game;
 
 import javax.swing.*;
@@ -7,11 +9,10 @@ import java.awt.event.ActionListener;
 import java.util.ResourceBundle;
 
 public class MainWindow extends JFrame {
-    private final int gameFieldSize;
     private final JButton[][] cells;
-    private final MainWindow mainWindow;
-    private Game game;
-    private ResourceBundle menuRb = ResourceBundle.getBundle("locales/menu_text");
+    private final Game game;
+    private final ResourceBundle menuRb = ResourceBundle.getBundle("resources/locales/menu_text");
+    private final ResourceBundle guiText = ResourceBundle.getBundle("resources/locales/gui_text");
     public static void main(String[] args) {
         MainWindow mw = new MainWindow();
         mw.setMinimumSize(new Dimension(300, 300));
@@ -20,8 +21,7 @@ public class MainWindow extends JFrame {
         mw.setVisible(true);
     }
     public MainWindow(){
-         mainWindow = this;
-         gameFieldSize = 3;
+        int gameFieldSize = 3;
 
          JPanel mainWindowPanel = new JPanel();
 
@@ -38,28 +38,25 @@ public class MainWindow extends JFrame {
                  cell.setFocusPainted(false);
                  int finalX = x;
                  int finalY = y;
-                 cell.addActionListener(new ActionListener() {
-                     @Override
-                     public void actionPerformed(ActionEvent e) {
-                         cell.setText("X");
-                         cell.setEnabled(false);
-                         boolean restartGame = false;
-                         switch (game.makeMove(finalX, finalY)){
-                             case YOU ->{
-                                JOptionPane.showMessageDialog(mainWindow, "Вы выиграли!", "Победа!", JOptionPane.INFORMATION_MESSAGE);
-                                restartGame = true;
-                             }
-                             case COMPUTER -> {
-                                 JOptionPane.showMessageDialog(mainWindow, "Вы проиграли!", "Поражение!", JOptionPane.INFORMATION_MESSAGE);
-                                 restartGame = true;
-                             }
-                             case DRAW -> {
-                                 JOptionPane.showMessageDialog(mainWindow, "У вас ничья!", "Ничья!", JOptionPane.INFORMATION_MESSAGE);
-                                 restartGame = true;
-                             }
+                 cell.addActionListener(e -> {
+                     cell.setText("X");
+                     cell.setEnabled(false);
+                     boolean restartGame = false;
+                     switch (game.makeMove(finalX, finalY)){
+                         case YOU ->{
+                            displayInformMessage("gameOver", "youWin");
+                            restartGame = true;
                          }
-                         if(restartGame)restartGame();
+                         case COMPUTER -> {
+                             displayInformMessage("gameOver", "youLose");
+                             restartGame = true;
+                         }
+                         case DRAW -> {
+                             displayInformMessage("gameOver", "youHaveDraw");
+                             restartGame = true;
+                         }
                      }
+                     if(restartGame)restartGame();
                  });
                  mainWindowPanel.add(cell);
              }
@@ -74,20 +71,20 @@ public class MainWindow extends JFrame {
     private JMenu createGameMenu(){
         JMenu jGameMenu = new JMenu(menuRb.getString("gameMenu"));
         JMenuItem jRestartGameMenuItem = new JMenuItem(menuRb.getString("restartGame"));
-        jRestartGameMenuItem.addActionListener(e -> {
-            restartGame();
-        });
+        jRestartGameMenuItem.addActionListener(e -> restartGame());
         jGameMenu.add(jRestartGameMenuItem);
         return jGameMenu;
     }
     public void restartGame(){
-        for (int i = 0; i < cells.length; i++) {
-            for (int j = 0; j < cells[i].length; j++) {
-                JButton cell = cells[i][j];
+        for (JButton[] jButtons : cells) {
+            for (JButton cell : jButtons) {
                 cell.setText("");
                 cell.setEnabled(true);
             }
         }
         game.reset();
+    }
+    private void displayInformMessage(String captionKey, String messageKey){
+        JOptionPane.showMessageDialog(this, guiText.getString(messageKey), guiText.getString(captionKey),  JOptionPane.INFORMATION_MESSAGE);
     }
 }
