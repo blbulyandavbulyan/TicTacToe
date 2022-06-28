@@ -166,7 +166,7 @@ public class Game {
 
                     return new CheckWinResult(true, winLine, winFigure == GameField.CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
                 }
-                else new CheckWinResult(true);
+                else return new CheckWinResult(true);
             }
         }
         //вертикальные линии
@@ -186,7 +186,7 @@ public class Game {
                     }
                     return new CheckWinResult(true, winLine, winFigure == GameField.CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
                 }
-                else new CheckWinResult(true);
+                else return new CheckWinResult(true);
             }
         }
         return new CheckWinResult(equalCounter == gameField.fieldSize);
