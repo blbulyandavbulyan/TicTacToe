@@ -110,10 +110,6 @@ public class Game {
         gameField.set(result, GameField.CellValue.O);
         return new ThinkResult(result);
     }
-    private Coordinates[] getWinLine(GameField.CellValue winFigure){
-
-        return null;
-    }
     private boolean checkWin(GameField.CellValue winFigure){
         return checkWin(winFigure, false).result;
     }

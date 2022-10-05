@@ -7,7 +7,6 @@ public class GameField {
 
     public enum CellValue{X, O}
     private final CellValue[][] cellValues;
-    private Collection<Coordinates> emptyCells;
     private int countEmptyCells;
     public GameField(int size){
         cellValues = new CellValue[size][size];

@@ -51,25 +51,22 @@ public class MainWindow extends JFrame {
                    cell.setText("X");
                    cell.setEnabled(false);
                    boolean restartGame = false;
-                   switch (game.makeMove(finalX, finalY)){
-                       case YOU:{
-                          displayInformMessage("gameOver", "youWin");
-                          score[0]++;
-                          restartGame = true;
-                          break;
+                   switch (game.makeMove(finalX, finalY)) {
+                       case YOU -> {
+                           displayInformMessage("gameOver", "youWin");
+                           score[0]++;
+                           restartGame = true;
                        }
-                       case COMPUTER:{
+                       case COMPUTER -> {
                            displayInformMessage("gameOver", "youLose");
                            score[1]++;
                            restartGame = true;
-                           break;
                        }
-                       case DRAW:{
+                       case DRAW -> {
                            displayInformMessage("gameOver", "youHaveDraw");
                            score[0]++;
                            score[1]++;
                            restartGame = true;
-                           break;
                        }
                    }
                    if(restartGame){
