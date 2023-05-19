@@ -1,12 +1,15 @@
 package ui;
 
-import game.Coordinates;
-import game.Game;
+import game.common.Coordinates;
+import game.core.Game;
+import game.core.MoveResult;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public class MainWindow extends JFrame {
@@ -16,7 +19,12 @@ public class MainWindow extends JFrame {
     private final Color defaultCellColor;
     private final ResourceBundle menuRb = ResourceBundle.getBundle("resources/locales/menu_text");
     private final ResourceBundle guiText = ResourceBundle.getBundle("resources/locales/gui_text");
-
+    private final static Map<Game.WHO_WINS, String> whoWinsToMessageString = new HashMap<>();
+    static {
+        whoWinsToMessageString.put(Game.WHO_WINS.YOU, "youWin");
+        whoWinsToMessageString.put(Game.WHO_WINS.COMPUTER, "youLose");
+        whoWinsToMessageString.put(Game.WHO_WINS.DRAW, "youHaveDraw");
+    }
     private final int[] score = new int[2];
     public static void main(String[] args) {
         MainWindow mw = new MainWindow();
@@ -31,15 +39,10 @@ public class MainWindow extends JFrame {
         scoreLabel = new JLabel("0:0", SwingConstants.CENTER);
         cellsPanel.setLayout(new GridLayout(gameFieldSize, gameFieldSize));
         cells = new JButton[gameFieldSize][gameFieldSize];
-        game = new Game(gameFieldSize, (coordinates -> {
+        game = new Game(gameFieldSize, coordinates -> {
             JButton cell = getCell(coordinates);
             cell.setText("O");
             cell.setEnabled(false);
-        }), checkWinResult ->  {
-                Color winLineColor = checkWinResult.whoWins == Game.WHO_WINS.COMPUTER ? new Color(125, 0, 0) : new Color(0, 125, 0);
-                for (Coordinates coordinates : checkWinResult.winLine) {
-                    getCell(coordinates).setBackground(winLineColor);
-                }
         });
         for(int y = 0; y < cells.length; y++){
             for (int x = 0; x < cells[y].length; x++) {
@@ -50,28 +53,26 @@ public class MainWindow extends JFrame {
                cell.addActionListener(e -> {
                    cell.setText("X");
                    cell.setEnabled(false);
-                   boolean restartGame = false;
-                   switch (game.makeMove(finalX, finalY)) {
-                       case YOU -> {
-                           displayInformMessage("gameOver", "youWin");
-                           score[0]++;
-                           restartGame = true;
-                       }
-                       case COMPUTER -> {
-                           displayInformMessage("gameOver", "youLose");
-                           score[1]++;
-                           restartGame = true;
-                       }
+                   MoveResult moveResult = game.makeMove(finalX, finalY);
+                   Game.WHO_WINS whoWins = moveResult.whoWins;
+                   switch (whoWins) {
+                       case YOU -> score[0]++;
+                       case COMPUTER -> score[1]++;
                        case DRAW -> {
-                           displayInformMessage("gameOver", "youHaveDraw");
                            score[0]++;
                            score[1]++;
-                           restartGame = true;
                        }
                    }
-                   if(restartGame){
-                       restartGame();
+                   if(whoWins != Game.WHO_WINS.CONTINUE){
+                       if(whoWins != Game.WHO_WINS.DRAW){
+                           Color winLineColor = whoWins == Game.WHO_WINS.COMPUTER ? new Color(125, 0, 0) : new Color(0, 125, 0);
+                           for (Coordinates coordinates : moveResult.getWinLine()) {
+                               getCell(coordinates).setBackground(winLineColor);
+                           }
+                       }
+                       displayInformMessage("gameOver", whoWinsToMessageString.get(whoWins));
                        scoreLabel.setText(String.format("%d:%d", score[0], score[1]));
+                       restartGame();
                    }
                });
                cellsPanel.add(cell);

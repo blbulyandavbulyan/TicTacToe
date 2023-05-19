@@ -1,3 +1,3 @@
-package game.field;
+package game.common;
 
 public enum CellValue {X, O}
