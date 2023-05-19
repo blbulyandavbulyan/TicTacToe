@@ -2,6 +2,8 @@ package game;
 
 import game.exceptions.CellIsNotEmptyException;
 import game.exceptions.GameOverException;
+import game.field.CellValue;
+import game.field.GameField;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -57,9 +59,9 @@ public class Game {
     public WHO_WINS makeMove(int x, int y){
         if(isGameOver)throw new GameOverException();
         if(gameField.get(x, y) == null){
-            gameField.set(x, y, GameField.CellValue.X);
+            gameField.set(x, y, CellValue.X);
             {
-                CheckWinResult checkWinResult = checkWin(GameField.CellValue.X, true);
+                CheckWinResult checkWinResult = checkWin(CellValue.X, true);
                 if(checkWinResult.result) {
                     displayWinLine.accept(checkWinResult);
                     return WHO_WINS.YOU;
@@ -91,29 +93,29 @@ public class Game {
         if(emptyCellsCoordinates == null)return null;
         for (Coordinates emptyCellCoordinates : emptyCellsCoordinates) {
             //если мы можем походить в какую-то клетку и выиграть, ходим и выигрываем
-            gameField.set(emptyCellCoordinates, GameField.CellValue.O);
-            CheckWinResult checkWinResult = checkWin(GameField.CellValue.O, true);
+            gameField.set(emptyCellCoordinates, CellValue.O);
+            CheckWinResult checkWinResult = checkWin(CellValue.O, true);
             if(checkWinResult.result){
-                gameField.set(emptyCellCoordinates, GameField.CellValue.O);
+                gameField.set(emptyCellCoordinates, CellValue.O);
                 return new ThinkResult(checkWinResult, emptyCellCoordinates);
             }
             //если игрок может походить в какую-то клетку и выиграть, ходим туда первыми и не даём ему выиграть
-            gameField.set(emptyCellCoordinates, GameField.CellValue.X);
-            if(checkWin(GameField.CellValue.X)){
-                gameField.set(emptyCellCoordinates, GameField.CellValue.O);
+            gameField.set(emptyCellCoordinates, CellValue.X);
+            if(checkWin(CellValue.X)){
+                gameField.set(emptyCellCoordinates, CellValue.O);
                 return new ThinkResult(emptyCellCoordinates);
             }
             else gameField.set(emptyCellCoordinates, null);
         }
         int randomIndex = getRandomIndex(emptyCellsCoordinates.size());
         Coordinates result = emptyCellsCoordinates.get(randomIndex);
-        gameField.set(result, GameField.CellValue.O);
+        gameField.set(result, CellValue.O);
         return new ThinkResult(result);
     }
-    private boolean checkWin(GameField.CellValue winFigure){
+    private boolean checkWin(CellValue winFigure){
         return checkWin(winFigure, false).result;
     }
-    private CheckWinResult checkWin(GameField.CellValue winFigure, boolean needWinLine){
+    private CheckWinResult checkWin(CellValue winFigure, boolean needWinLine){
         int equalCounter = 0;
         //с левого верхнего угла в правый нижний
         for (; equalCounter < gameField.fieldSize; equalCounter++) {
@@ -124,7 +126,7 @@ public class Game {
                 Coordinates[] winLine = new Coordinates[equalCounter];
                 for(int xy = 0; xy < gameField.fieldSize; xy++)
                     winLine[xy] = new Coordinates(xy, xy);
-                return new CheckWinResult(true, winLine, winFigure == GameField.CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
+                return new CheckWinResult(true, winLine, winFigure == CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
             }
             else  return new CheckWinResult(true);
         }
@@ -141,7 +143,7 @@ public class Game {
                         winLine[y] = new Coordinates(x, y);
 
                 }
-                return new CheckWinResult(true, winLine, winFigure == GameField.CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
+                return new CheckWinResult(true, winLine, winFigure == CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
             }
             else  return new CheckWinResult(true);
         }
@@ -160,7 +162,7 @@ public class Game {
                     Coordinates[] winLine = new Coordinates[equalCounter];
                     for (int x = 0; x < gameField.fieldSize; x++)winLine[x] = new Coordinates(x, y);
 
-                    return new CheckWinResult(true, winLine, winFigure == GameField.CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
+                    return new CheckWinResult(true, winLine, winFigure == CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
                 }
                 else return new CheckWinResult(true);
             }
@@ -180,7 +182,7 @@ public class Game {
                     for (int y = 0; y < gameField.fieldSize; y++) {
                         winLine[y] = new Coordinates(x, y);
                     }
-                    return new CheckWinResult(true, winLine, winFigure == GameField.CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
+                    return new CheckWinResult(true, winLine, winFigure == CellValue.X ? WHO_WINS.YOU : WHO_WINS.COMPUTER);
                 }
                 else return new CheckWinResult(true);
             }

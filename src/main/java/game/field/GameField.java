@@ -1,11 +1,12 @@
-package game;
+package game.field;
+
+import game.Coordinates;
 
 import java.util.*;
 
 public class GameField {
     public final int fieldSize;
 
-    public enum CellValue{X, O}
     private final CellValue[][] cellValues;
     private int countEmptyCells;
     public GameField(int size){
