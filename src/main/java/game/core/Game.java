@@ -11,16 +11,15 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 
 
-public class Game {
+public class Game implements GameEngine{
     //считаем что игрок играет крестиком, а компьютер ноликом
-    GameField gameField;
-    private final Consumer<Coordinates> displayComputerMove;
+    private final GameField gameField;
+    private Consumer<Coordinates> displayComputerMove;
     private boolean isGameOver = false;
-    public enum WHO_WINS {
-        YOU,//победил игрок
-        COMPUTER, //победил компьютер
-        DRAW,// ничья
-        CONTINUE// никто, игра продолжается
+
+    @Override
+    public void setComputerMoveDisplayer(Consumer<Coordinates> computerMoveDisplayer) {
+        displayComputerMove = computerMoveDisplayer;
     }
 
     private static class ThinkResult{
@@ -39,6 +38,12 @@ public class Game {
         gameField = new GameField(fieldSize);
         this.displayComputerMove = displayComputerMove;
     }
+
+    public Game(int fieldSize) {
+        this(fieldSize, null);
+    }
+
+    @Override
     public MoveResult makeMove(int x, int y){
         if(isGameOver)throw new GameOverException();
         if(gameField.isCellEmpty(x, y)){
@@ -55,7 +60,6 @@ public class Game {
                     return new MoveResult(WHO_WINS.COMPUTER, myMove.computerWin.getWinLine());
                 }
                 else return gameField.getCountEmptyCells() == 0 ? MoveResult.drawResult : MoveResult.continueResult;
-
             }
             else return MoveResult.drawResult;
             //else return WHO_WINS.DRAW;
@@ -83,7 +87,7 @@ public class Game {
                 gameField.set(emptyCellCoordinates, CellValue.O);
                 return new ThinkResult(emptyCellCoordinates);
             }
-            else gameField.clearCell(emptyCellCoordinates);
+            gameField.clearCell(emptyCellCoordinates);
         }
         int randomIndex = getRandomIndex(emptyCellsCoordinates.size());
         Coordinates result = emptyCellsCoordinates.get(randomIndex);
