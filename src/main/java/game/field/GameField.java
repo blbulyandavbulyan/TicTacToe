@@ -9,12 +9,45 @@ public class GameField {
     private final int fieldSize;
 
     private final CellValue[][] cellValues;
+    private final Collection<Collection<Coordinates>> winLines;
     private int countEmptyCells;
     public GameField(int size){
         cellValues = new CellValue[size][size];
         fieldSize = size;
-        clear();
-
+        winLines = generateWinLines(fieldSize);
+        init();
+    }
+    private static Collection<Collection<Coordinates>> generateWinLines(int fieldSize){
+        Collection<Collection<Coordinates>> result = new ArrayList<>();
+        //с левого верхнего угла в правый нижний
+        {
+            Collection<Coordinates> firstDiagonal = new ArrayList<>();
+            for (int xy = 0; xy < fieldSize; xy++)
+                firstDiagonal.add(new Coordinates(xy, xy));
+            result.add(Collections.unmodifiableCollection(firstDiagonal));
+        }
+        {
+            Collection<Coordinates> secondDiagonal = new ArrayList<>();
+            //с правого верхнего в левый нижний
+            for(int x = fieldSize - 1, y = 0; x >= 0 && y < fieldSize; x--, y++){
+                secondDiagonal.add(new Coordinates(x, y));
+            }
+            result.add(Collections.unmodifiableCollection(secondDiagonal));
+        }
+        for (int x = 0; x < fieldSize; x++) {
+            Collection<Coordinates> verticalLine = new ArrayList<>();
+            Collection<Coordinates> horizontalLine = new ArrayList<>();
+            for(int y = 0; y < fieldSize; y++){
+                verticalLine.add(new Coordinates(x, y));
+                horizontalLine.add(new Coordinates(y, x));
+            }
+            result.add(Collections.unmodifiableCollection(verticalLine));
+            result.add(Collections.unmodifiableCollection(horizontalLine));
+        }
+        return result;
+    }
+    private CellValue get(int x, int y){
+        return cellValues[y][x];
     }
     public void set(final Coordinates coordinates, CellValue cellValue){
         set(coordinates.x, coordinates.y, cellValue);
@@ -30,11 +63,10 @@ public class GameField {
     public void clearCell(Coordinates coordinates){
         set(coordinates.x, coordinates.y, null);
     }
-    //устанавливает по заданным координатам moveFigure если при ходе в заданные координаты побеждает winFigure
-    private CellValue get(int x, int y){
-        return cellValues[y][x];
-    }
     public void clear(){
+        init();//выполняем инициализацию заново
+    }
+    private void init(){
         for (int y = 0; y < fieldSize; y++) {
             for (int x = 0; x < fieldSize; x++)set(x, y, null);
         }
@@ -54,79 +86,19 @@ public class GameField {
         return emptyCellsCoordinates;
     }
     public boolean checkWin(CellValue winFigure){
-        return checkWin(winFigure, false).result;
+        return !findWinLine(winFigure).isEmpty();
     }
-    public CheckWinResult checkWin(CellValue winFigure, boolean needWinLine){
-        int equalCounter = 0;
-        //с левого верхнего угла в правый нижний
-        for (; equalCounter < this.fieldSize; equalCounter++) {
-            if(this.get(equalCounter, equalCounter) != winFigure) break;
-        }
-        if(equalCounter == this.fieldSize) {
-            if(needWinLine){
-                Coordinates[] winLine = new Coordinates[equalCounter];
-                for(int xy = 0; xy < this.fieldSize; xy++)
-                    winLine[xy] = new Coordinates(xy, xy);
-                return new CheckWinResult(true, winLine);
-            }
-            else  return new CheckWinResult(true);
-        }
-        else equalCounter = 0;
-        //с правого верхнего в левый нижний
-        for(int x = this.fieldSize - 1, y = 0; x >= 0 && y < this.fieldSize; x--, y++){
-            if(this.get(x, y) == winFigure)equalCounter++;
-        }
-        if(equalCounter == this.fieldSize) {
-            if(needWinLine){
-                Coordinates[] winLine = new Coordinates[equalCounter];
-                for(int x = this.fieldSize - 1, y = 0; x >= 0 && y < this.fieldSize; x--, y++){
-                    if(this.get(x, y) == winFigure)
-                        winLine[y] = new Coordinates(x, y);
-
+    public Collection<Coordinates> findWinLine(CellValue winFigure){
+        for(var winLine : winLines){
+            int count = 0;
+            for(Coordinates winCoordinates : winLine){
+                if(get(winCoordinates.x, winCoordinates.y) == winFigure){
+                    count++;
                 }
-                return new CheckWinResult(true, winLine);
+                else break;
             }
-            else  return new CheckWinResult(true);
+            if(count == winLine.size())return winLine;
         }
-        else equalCounter = 0;
-        //горизонтальные линии
-        for(int y = 0; y < this.fieldSize; y++){
-            for (int x = 0; x < this.fieldSize; x++) {
-                if(this.get(x, y) == winFigure)equalCounter++;
-                else{
-                    equalCounter = 0;
-                    break;
-                }
-            }
-            if(equalCounter == this.fieldSize){
-                if(needWinLine){
-                    Coordinates[] winLine = new Coordinates[equalCounter];
-                    for (int x = 0; x < this.fieldSize; x++)winLine[x] = new Coordinates(x, y);
-                    return new CheckWinResult(true, winLine);
-                }
-                else return new CheckWinResult(true);
-            }
-        }
-        //вертикальные линии
-        for (int x = 0; x < this.fieldSize; x++) {
-            for (int y = 0; y < this.fieldSize; y++) {
-                if(this.get(x, y) == winFigure)equalCounter++;
-                else{
-                    equalCounter = 0;
-                    break;
-                }
-            }
-            if(equalCounter == this.fieldSize) {
-                if(needWinLine){
-                    Coordinates[] winLine = new Coordinates[equalCounter];
-                    for (int y = 0; y < this.fieldSize; y++) {
-                        winLine[y] = new Coordinates(x, y);
-                    }
-                    return new CheckWinResult(true, winLine);
-                }
-                else return new CheckWinResult(true);
-            }
-        }
-        return new CheckWinResult(equalCounter == this.fieldSize);
+        return Collections.emptyList();
     }
 }

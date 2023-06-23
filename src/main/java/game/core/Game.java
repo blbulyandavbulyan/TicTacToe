@@ -4,11 +4,11 @@ import game.common.CellValue;
 import game.common.Coordinates;
 import game.exceptions.CellIsNotEmptyException;
 import game.exceptions.GameOverException;
-import game.field.CheckWinResult;
 import game.field.GameField;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.function.Consumer;
 
@@ -19,16 +19,16 @@ public class Game implements GameEngine{
     private Consumer<Coordinates> displayComputerMove;
     private boolean isGameOver = false;
     private static class ThinkResult{
-        final CheckWinResult computerWin;
 
         final Coordinates computerMoveCoordinates;
-        public ThinkResult(CheckWinResult computerWin, Coordinates computerMoveCoordinates) {
-            this.computerWin = computerWin;
+        final Collection<Coordinates> computerWinLine;
+        public ThinkResult(Collection<Coordinates> computerWinLine, Coordinates computerMoveCoordinates) {
+            this.computerWinLine = computerWinLine;
             this.computerMoveCoordinates = computerMoveCoordinates;
         }
         public ThinkResult(Coordinates computerMoveCoordinates) {
             this.computerMoveCoordinates = computerMoveCoordinates;
-            this.computerWin = null;
+            this.computerWinLine = Collections.emptyList();
         }
     }
     private static class ThinkScore{
@@ -61,15 +61,15 @@ public class Game implements GameEngine{
         if(gameField.isCellEmpty(x, y)){
             gameField.set(x, y, CellValue.X);
             {
-                CheckWinResult checkWinResult = gameField.checkWin(CellValue.X, true);
-                if(checkWinResult.result)return new MoveResult(WHO_WINS.YOU, checkWinResult.getWinLine());
+                var winLine = gameField.findWinLine(CellValue.X);
+                if(!winLine.isEmpty()) return new MoveResult(WHO_WINS.YOU, winLine);
             }
             ThinkResult myMove = think();
             if(myMove != null){
                 if(displayComputerMove != null)
                     displayComputerMove.accept(myMove.computerMoveCoordinates);
-                if(myMove.computerWin != null && myMove.computerWin.result){
-                    return new MoveResult(WHO_WINS.COMPUTER, myMove.computerWin.getWinLine());
+                if(!myMove.computerWinLine.isEmpty()){
+                    return new MoveResult(WHO_WINS.COMPUTER, myMove.computerWinLine);
                 }
                 else return gameField.getCountEmptyCells() == 0 ? MoveResult.drawResult : MoveResult.continueResult;
             }
@@ -88,10 +88,10 @@ public class Game implements GameEngine{
         for (Coordinates emptyCellCoordinates : emptyCellsCoordinates) {
             //если мы можем походить в какую-то клетку и выиграть, ходим и выигрываем
             gameField.set(emptyCellCoordinates, CellValue.O);
-            CheckWinResult checkWinResult = gameField.checkWin(CellValue.O, true);
-            if(checkWinResult.result){
+            Collection<Coordinates> winLine = gameField.findWinLine(CellValue.O);
+            if(!winLine.isEmpty()){
                 gameField.set(emptyCellCoordinates, CellValue.O);
-                return new ThinkResult(checkWinResult, emptyCellCoordinates);
+                return new ThinkResult(winLine, emptyCellCoordinates);
             }
             //если игрок может походить в какую-то клетку и выиграть, ходим туда первыми и не даём ему выиграть
             gameField.set(emptyCellCoordinates, CellValue.X);
