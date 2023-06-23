@@ -1,9 +1,9 @@
 package game.core;
 
+import game.common.CellValue;
 import game.common.Coordinates;
 import game.exceptions.CellIsNotEmptyException;
 import game.exceptions.GameOverException;
-import game.common.CellValue;
 import game.field.CheckWinResult;
 import game.field.GameField;
 
@@ -115,7 +115,7 @@ public class Game implements GameEngine{
             thinkScores.add(thinkScore);
         }
         //выбираем максимальное по сумме ничей и побед
-        return thinkScores.stream().max(Comparator.comparingLong(e->e.countOfWins + e.countOfDraws)).get().getCoordinates();
+        return thinkScores.stream().max(Comparator.comparingLong(e->e.countOfWins + e.countOfDraws)).map(ThinkScore::getCoordinates).or(()->emtpyCoordinates.stream().findFirst()).orElseThrow(()->new RuntimeException("Strange and impossible exception happened"));
     }
     private void calculateScoreForEmptyCell(Collection<Coordinates> emptyCells, CellValue checkWinFigure, CellValue moveFigure, ThinkScore thinkScore){
         // TODO: 21.05.2023 написать функцию расчёта очков для пустой клетки
@@ -133,8 +133,5 @@ public class Game implements GameEngine{
                 gameField.clearCell(emptyCellCoordinate);
             }
         }
-    }
-    private static int getRandomIndex(int max){
-        return (int) (Math.random()*max);
     }
 }
