@@ -9,6 +9,7 @@ import game.field.GameField;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.function.Consumer;
 
 
@@ -27,6 +28,25 @@ public class Game implements GameEngine{
         public ThinkResult(Coordinates computerMoveCoordinates) {
             this.computerMoveCoordinates = computerMoveCoordinates;
             this.computerWin = null;
+        }
+    }
+    private static class ThinkScore{
+        private final Coordinates coordinates;
+        long countOfWins;
+        long countOfLoses;
+        long countOfDraws;
+        public ThinkScore(Coordinates coordinates) {
+            this.coordinates = coordinates;
+        }
+
+        public void add(ThinkScore another){
+            this.countOfDraws+=another.countOfDraws;
+            this.countOfLoses+=another.countOfLoses;
+            this.countOfWins+=another.countOfWins;
+        }
+
+        public Coordinates getCoordinates() {
+            return coordinates;
         }
     }
     public Game(int fieldSize, Consumer<Coordinates> displayComputerMove){
@@ -94,41 +114,40 @@ public class Game implements GameEngine{
     private Coordinates findOptimalMove(Collection<Coordinates> emtpyCoordinates){
         long maximumMoveScore = 0;
         Coordinates optimalMove = null;
+        ArrayList<ThinkScore> thinkScores = new ArrayList<>(emtpyCoordinates.size());
         for (Coordinates cellToMove : emtpyCoordinates){
             gameField.set(cellToMove, CellValue.O);
-            long currentScore = calculateScoreForEmptyCell(emtpyCoordinates, CellValue.O, CellValue.X);
+            ThinkScore thinkScore = new ThinkScore(cellToMove);
+            calculateScoreForEmptyCell(emtpyCoordinates, CellValue.O, CellValue.X, thinkScore);
             gameField.clearCell(cellToMove);
-            if(currentScore > maximumMoveScore){
-                optimalMove = cellToMove;
-                maximumMoveScore = currentScore;
-            }
+            thinkScores.add(thinkScore);
         }
-        return optimalMove;
+        //теперь выбор оптимального хода, правило такое, ищем все клетки, у которых суммарное количество ничей и побед будет больше, чем проигрышей
+        //и выбираем из них максимальное
+        return thinkScores.stream().max(Comparator.comparingLong(e->e.countOfWins + e.countOfDraws)).get().getCoordinates();
     }
-    private long calculateScoreForEmptyCell(Collection<Coordinates> emptyCells, CellValue checkWinFigure, CellValue moveFigure){
+    private void calculateScoreForEmptyCell(Collection<Coordinates> emptyCells, CellValue checkWinFigure, CellValue moveFigure, ThinkScore thinkScore){
         // TODO: 21.05.2023 написать функцию расчёта очков для пустой клетки
         //победила наша проверяемая фигура
         //
         if(gameField.checkWin(checkWinFigure)){
-            return 30;
+            thinkScore.countOfWins+=1;
         }
         //победила фигура противника
         else if(gameField.checkWin(checkWinFigure.not())){
-            return 1;
+            thinkScore.countOfLoses+=1;
         }
         //ничья :(
         else if(gameField.getCountEmptyCells() == 0){
-            return 2;
+            thinkScore.countOfDraws+=1;
         }
-
-
-        long result = 0;
-        for (Coordinates emptyCellCoordinate : emptyCells) {
-            gameField.set(emptyCellCoordinate.x, emptyCellCoordinate.y, moveFigure);
-            result+=calculateScoreForEmptyCell(gameField.getEmptyCellsCoordinates(), checkWinFigure, moveFigure.not());
-            gameField.clearCell(emptyCellCoordinate);
+        else {
+            for (Coordinates emptyCellCoordinate : emptyCells) {
+                gameField.set(emptyCellCoordinate.x, emptyCellCoordinate.y, moveFigure);
+                calculateScoreForEmptyCell(gameField.getEmptyCellsCoordinates(), checkWinFigure, moveFigure.not(), thinkScore);
+                gameField.clearCell(emptyCellCoordinate);
+            }
         }
-        return result;
     }
     private static int getRandomIndex(int max){
         return (int) (Math.random()*max);
