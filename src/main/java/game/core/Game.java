@@ -20,6 +20,7 @@ public class Game implements GameEngine{
     private boolean isGameOver = false;
     private static class ThinkResult{
         final CheckWinResult computerWin;
+
         final Coordinates computerMoveCoordinates;
         public ThinkResult(CheckWinResult computerWin, Coordinates computerMoveCoordinates) {
             this.computerWin = computerWin;
@@ -38,13 +39,6 @@ public class Game implements GameEngine{
         public ThinkScore(Coordinates coordinates) {
             this.coordinates = coordinates;
         }
-
-        public void add(ThinkScore another){
-            this.countOfDraws+=another.countOfDraws;
-            this.countOfLoses+=another.countOfLoses;
-            this.countOfWins+=another.countOfWins;
-        }
-
         public Coordinates getCoordinates() {
             return coordinates;
         }
@@ -112,8 +106,6 @@ public class Game implements GameEngine{
         return new ThinkResult(result);
     }
     private Coordinates findOptimalMove(Collection<Coordinates> emtpyCoordinates){
-        long maximumMoveScore = 0;
-        Coordinates optimalMove = null;
         ArrayList<ThinkScore> thinkScores = new ArrayList<>(emtpyCoordinates.size());
         for (Coordinates cellToMove : emtpyCoordinates){
             gameField.set(cellToMove, CellValue.O);
@@ -122,25 +114,18 @@ public class Game implements GameEngine{
             gameField.clearCell(cellToMove);
             thinkScores.add(thinkScore);
         }
-        //теперь выбор оптимального хода, правило такое, ищем все клетки, у которых суммарное количество ничей и побед будет больше, чем проигрышей
-        //и выбираем из них максимальное
+        //выбираем максимальное по сумме ничей и побед
         return thinkScores.stream().max(Comparator.comparingLong(e->e.countOfWins + e.countOfDraws)).get().getCoordinates();
     }
     private void calculateScoreForEmptyCell(Collection<Coordinates> emptyCells, CellValue checkWinFigure, CellValue moveFigure, ThinkScore thinkScore){
         // TODO: 21.05.2023 написать функцию расчёта очков для пустой клетки
         //победила наша проверяемая фигура
         //
-        if(gameField.checkWin(checkWinFigure)){
-            thinkScore.countOfWins+=1;
-        }
+        if(gameField.checkWin(checkWinFigure)) thinkScore.countOfWins += 1;
         //победила фигура противника
-        else if(gameField.checkWin(checkWinFigure.not())){
-            thinkScore.countOfLoses+=1;
-        }
+        else if(gameField.checkWin(checkWinFigure.not())) thinkScore.countOfLoses += 1;
         //ничья :(
-        else if(gameField.getCountEmptyCells() == 0){
-            thinkScore.countOfDraws+=1;
-        }
+        else if(gameField.getCountEmptyCells() == 0) thinkScore.countOfDraws += 1;
         else {
             for (Coordinates emptyCellCoordinate : emptyCells) {
                 gameField.set(emptyCellCoordinate.x, emptyCellCoordinate.y, moveFigure);
