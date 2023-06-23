@@ -6,7 +6,7 @@
 
     <groupId>org.blbulyandavbulyan</groupId>
     <artifactId>TicTacToe</artifactId>
-    <version>1.0.1-beta</version>
+    <version>1.0.2-beta</version>
 
     <properties>
         <maven.compiler.source>14</maven.compiler.source>
